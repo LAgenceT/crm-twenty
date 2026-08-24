@@ -177,4 +177,40 @@ describe('slackSetUserLinkHandler', () => {
     });
     expect(createSlackUserLinkMock).not.toHaveBeenCalled();
   });
+
+  it('should read the input from the route payload body', async () => {
+    const result = await slackSetUserLinkHandler({
+      body: { ...INPUT, name: 'Ada' },
+      headers: {},
+      queryStringParameters: {},
+      pathParameters: {},
+      isBase64Encoded: false,
+      requestContext: {
+        http: { method: 'POST', path: '/s/slack-user-links/set' },
+      },
+      userWorkspaceId: 'workspace-1',
+    });
+
+    expect(result.success).toBe(true);
+    expect(createSlackUserLinkMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        slackUserId: INPUT.slackUserId,
+        workspaceMemberId: INPUT.workspaceMemberId,
+        name: 'Ada',
+        source: 'MANUAL',
+      }),
+    );
+  });
+
+  it('should fail closed when required fields are blank', async () => {
+    const result = await slackSetUserLinkHandler({
+      ...INPUT,
+      workspaceMemberId: '',
+    });
+
+    expect(result.success).toBe(false);
+    expect(currentUserHasWorkspaceMembersPermissionMock).not.toHaveBeenCalled();
+    expect(createSlackUserLinkMock).not.toHaveBeenCalled();
+  });
 });

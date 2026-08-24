@@ -1,4 +1,5 @@
 import { isNonEmptyString } from '@sniptt/guards';
+import { type RoutePayload } from 'twenty-sdk/define';
 import { CoreApiClient } from 'twenty-client-sdk/core';
 import { isDefined } from 'twenty-sdk/utils';
 
@@ -13,12 +14,40 @@ import { currentUserHasWorkspaceMembersPermission } from 'src/logic-functions/ut
 import { getInstalledSlackTeamId } from 'src/logic-functions/utils/get-installed-slack-team-id';
 import { getSlackClient } from 'src/logic-functions/utils/get-slack-client';
 
-export const slackSetUserLinkHandler = async ({
-  slackUserId,
-  workspaceMemberId,
-  slackTeamId: requestedSlackTeamId,
-  name,
-}: SlackSetUserLinkInput): Promise<SlackToolResult> => {
+// The agent tool passes the input directly, the HTTP route wraps it in a RoutePayload body.
+type SlackSetUserLinkPayload =
+  | SlackSetUserLinkInput
+  | RoutePayload<SlackSetUserLinkInput>;
+
+const isRoutePayload = (
+  payload: SlackSetUserLinkPayload,
+): payload is RoutePayload<SlackSetUserLinkInput> => 'body' in payload;
+
+const extractSlackSetUserLinkInput = (
+  payload: SlackSetUserLinkPayload,
+): SlackSetUserLinkInput =>
+  isRoutePayload(payload)
+    ? ((payload.body ?? {}) as SlackSetUserLinkInput)
+    : payload;
+
+export const slackSetUserLinkHandler = async (
+  payload: SlackSetUserLinkPayload,
+): Promise<SlackToolResult> => {
+  const {
+    slackUserId,
+    workspaceMemberId,
+    slackTeamId: requestedSlackTeamId,
+    name,
+  } = extractSlackSetUserLinkInput(payload);
+
+  if (!isNonEmptyString(slackUserId) || !isNonEmptyString(workspaceMemberId)) {
+    return {
+      success: false,
+      message: 'Missing required fields',
+      error: 'slackUserId and workspaceMemberId are required.',
+    };
+  }
+
   const isAllowed = await currentUserHasWorkspaceMembersPermission();
 
   if (!isAllowed) {
