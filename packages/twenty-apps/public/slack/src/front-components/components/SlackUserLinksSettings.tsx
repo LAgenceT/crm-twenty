@@ -1,10 +1,7 @@
-import 'twenty-ui/style.css';
-
 import styled from '@emotion/styled';
-import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { H2Title } from 'twenty-ui/typography';
 
+import { SlackSettingsSection } from 'src/front-components/components/SlackSettingsSection';
 import { SlackUserLinkForm } from 'src/front-components/components/SlackUserLinkForm';
 import { SlackUserLinksList } from 'src/front-components/components/SlackUserLinksList';
 import { useCanManageSlackUserLinks } from 'src/front-components/hooks/use-can-manage-slack-user-links';
@@ -84,11 +81,10 @@ export const SlackUserLinksSettings = () => {
       {canManage && (
         <SlackUserLinkForm onLinkSaved={refetchSlackUserLinks} />
       )}
-      <Section>
-        <H2Title
-          title="Slack user links"
-          description="Each link maps a Slack account to the workspace member whose permissions the assistant borrows."
-        />
+      <SlackSettingsSection
+        title="Slack user links"
+        description="Each link maps a Slack account to the workspace member whose permissions the assistant borrows."
+      >
         {isSlackUserLinksLoading ? (
           <StyledCenteredState>Loading links…</StyledCenteredState>
         ) : errorMessage !== undefined ? (
@@ -96,7 +92,7 @@ export const SlackUserLinksSettings = () => {
         ) : (
           <SlackUserLinksList slackUserLinks={slackUserLinks} />
         )}
-      </Section>
+      </SlackSettingsSection>
     </StyledContainer>
   );
 };

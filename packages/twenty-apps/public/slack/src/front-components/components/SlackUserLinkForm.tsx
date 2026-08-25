@@ -2,11 +2,10 @@ import styled from '@emotion/styled';
 import { isNonEmptyString } from '@sniptt/guards';
 import { useState } from 'react';
 import { enqueueSnackbar } from 'twenty-sdk/front-component';
-import { Button } from 'twenty-ui/input';
-import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { H2Title } from 'twenty-ui/typography';
 
+import { SlackButton } from 'src/front-components/components/SlackButton';
+import { SlackSettingsSection } from 'src/front-components/components/SlackSettingsSection';
 import { SlackUserLinkTextInput } from 'src/front-components/components/SlackUserLinkTextInput';
 import { WorkspaceMemberPicker } from 'src/front-components/components/WorkspaceMemberPicker';
 import { useSetSlackUserLink } from 'src/front-components/hooks/use-set-slack-user-link';
@@ -88,11 +87,10 @@ export const SlackUserLinkForm = ({ onLinkSaved }: SlackUserLinkFormProps) => {
   };
 
   return (
-    <Section>
-      <H2Title
-        title="Link a Slack user"
-        description="Pick a workspace member and the Slack account whose messages should act with that member's permissions. Manual links win over email matching."
-      />
+    <SlackSettingsSection
+      title="Link a Slack user"
+      description="Pick a workspace member and the Slack account whose messages should act with that member's permissions. Manual links win over email matching."
+    >
       <StyledForm
         onSubmit={(event) => {
           event.preventDefault();
@@ -146,16 +144,15 @@ export const SlackUserLinkForm = ({ onLinkSaved }: SlackUserLinkFormProps) => {
           />
         </StyledField>
         <StyledActions>
-          <Button
+          <SlackButton
             type="button"
-            title={isSubmitting ? 'Saving…' : 'Save link'}
-            variant="primary"
-            accent="blue"
             disabled={!canSubmit}
             onClick={handleSubmit}
-          />
+          >
+            {isSubmitting ? 'Saving…' : 'Save link'}
+          </SlackButton>
         </StyledActions>
       </StyledForm>
-    </Section>
+    </SlackSettingsSection>
   );
 };
