@@ -1,7 +1,10 @@
-type WorkspaceMemberName = {
-  firstName?: string | null;
-  lastName?: string | null;
-} | null;
+type WorkspaceMemberName =
+  | {
+      firstName?: string | null;
+      lastName?: string | null;
+    }
+  | null
+  | undefined;
 
 export const formatWorkspaceMemberName = (
   name: WorkspaceMemberName,

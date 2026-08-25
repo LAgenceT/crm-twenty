@@ -1,5 +1,4 @@
 import styled from '@emotion/styled';
-import { Tag } from 'twenty-ui/data-display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { SLACK_USER_LINK_SOURCE } from 'src/logic-functions/constants/slack-user-link-source';
@@ -49,11 +48,23 @@ const StyledEmptyState = styled.div`
   padding: ${() => themeCssVariables.spacing[2]};
 `;
 
+const StyledSourceBadge = styled.span<{ isManual: boolean }>`
+  border: 1px solid
+    ${({ isManual }) =>
+      isManual ? themeCssVariables.color.blue : themeCssVariables.color.green};
+  border-radius: ${() => themeCssVariables.border.radius.pill};
+  color: ${({ isManual }) =>
+    isManual ? themeCssVariables.color.blue : themeCssVariables.color.green};
+  flex-shrink: 0;
+  font-family: ${() => themeCssVariables.font.family};
+  font-size: ${() => themeCssVariables.font.size.xs};
+  padding: ${() => themeCssVariables.spacing[1]} ${() =>
+    themeCssVariables.spacing[2]};
+  white-space: nowrap;
+`;
+
 const getSourceLabel = (source: string | null): string =>
   source === SLACK_USER_LINK_SOURCE.MANUAL ? 'Set manually' : 'Matched on email';
-
-const getSourceColor = (source: string | null): 'blue' | 'green' =>
-  source === SLACK_USER_LINK_SOURCE.MANUAL ? 'blue' : 'green';
 
 type SlackUserLinksListProps = {
   slackUserLinks: SlackUserLinkRecord[];
@@ -82,10 +93,11 @@ export const SlackUserLinksList = ({
               {slackUserLink.slackTeamId ?? 'unknown'}
             </StyledMeta>
           </StyledDetails>
-          <Tag
-            color={getSourceColor(slackUserLink.source)}
-            text={getSourceLabel(slackUserLink.source)}
-          />
+          <StyledSourceBadge
+            isManual={slackUserLink.source === SLACK_USER_LINK_SOURCE.MANUAL}
+          >
+            {getSourceLabel(slackUserLink.source)}
+          </StyledSourceBadge>
         </StyledRow>
       ))}
     </StyledList>

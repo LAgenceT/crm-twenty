@@ -1,6 +1,6 @@
 import { isNonEmptyString } from '@sniptt/guards';
 import { useEffect, useState } from 'react';
-import { CoreApiClient } from 'twenty-client-sdk/core';
+import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import { type WorkspaceMemberOption } from 'src/front-components/types/workspace-member-option.type';
 import { formatWorkspaceMemberName } from 'src/front-components/utils/format-workspace-member-name.util';
@@ -8,8 +8,19 @@ import { formatWorkspaceMemberName } from 'src/front-components/utils/format-wor
 const WORKSPACE_MEMBER_SEARCH_DEBOUNCE_MS = 250;
 const WORKSPACE_MEMBER_SEARCH_PAGE_SIZE = 20;
 
-const escapeIlikePattern = (value: string): string =>
-  value.replace(/[\\%_]/g, '\\$&');
+// Strip characters that would break the REST filter DSL or act as ilike wildcards.
+const sanitizeSearchTerm = (value: string): string =>
+  value.replace(/[(),[\]:%\\_]/g, ' ').trim();
+
+type WorkspaceMemberRestRecord = {
+  id?: string | null;
+  name?: { firstName?: string | null; lastName?: string | null } | null;
+  userEmail?: string | null;
+};
+
+type WorkspaceMembersResponse = {
+  data?: { workspaceMembers?: WorkspaceMemberRestRecord[] | null } | null;
+};
 
 type WorkspaceMemberSearchState = {
   options: WorkspaceMemberOption[];
@@ -23,9 +34,9 @@ export const useWorkspaceMemberSearch = (
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    const trimmedSearchTerm = searchTerm.trim();
+    const sanitizedSearchTerm = sanitizeSearchTerm(searchTerm);
 
-    if (!isNonEmptyString(trimmedSearchTerm)) {
+    if (!isNonEmptyString(sanitizedSearchTerm)) {
       setOptions([]);
       setIsSearching(false);
 
@@ -38,28 +49,16 @@ export const useWorkspaceMemberSearch = (
 
     const timeoutId = setTimeout(async () => {
       try {
-        const pattern = `%${escapeIlikePattern(trimmedSearchTerm)}%`;
-        const client = new CoreApiClient();
-        const queryResult = await client.query({
-          workspaceMembers: {
-            __args: {
-              filter: {
-                or: [
-                  { name: { firstName: { ilike: pattern } } },
-                  { name: { lastName: { ilike: pattern } } },
-                ],
-              },
-              first: WORKSPACE_MEMBER_SEARCH_PAGE_SIZE,
-            },
-            edges: {
-              node: {
-                id: true,
-                name: { firstName: true, lastName: true },
-                userEmail: true,
-              },
+        const filter = `or(name.firstName[ilike]:%${sanitizedSearchTerm}%,name.lastName[ilike]:%${sanitizedSearchTerm}%)`;
+        const response = await new RestApiClient().get<WorkspaceMembersResponse>(
+          '/rest/workspaceMembers',
+          {
+            query: {
+              filter,
+              limit: String(WORKSPACE_MEMBER_SEARCH_PAGE_SIZE),
             },
           },
-        });
+        );
 
         if (cancelled) {
           return;
@@ -67,17 +66,15 @@ export const useWorkspaceMemberSearch = (
 
         const memberOptions: WorkspaceMemberOption[] = [];
 
-        for (const edge of queryResult.workspaceMembers?.edges ?? []) {
-          const node = edge?.node;
-
-          if (!isNonEmptyString(node?.id)) {
+        for (const record of response.data?.workspaceMembers ?? []) {
+          if (!isNonEmptyString(record.id)) {
             continue;
           }
 
           memberOptions.push({
-            id: node.id,
-            name: formatWorkspaceMemberName(node.name),
-            userEmail: node.userEmail ?? null,
+            id: record.id,
+            name: formatWorkspaceMemberName(record.name),
+            userEmail: record.userEmail ?? null,
           });
         }
 

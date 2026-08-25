@@ -1,6 +1,6 @@
 import { isNonEmptyString } from '@sniptt/guards';
 import { useCallback, useEffect, useState } from 'react';
-import { CoreApiClient } from 'twenty-client-sdk/core';
+import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import { type SlackUserLinkRecord } from 'src/front-components/types/slack-user-link-record.type';
 import { formatWorkspaceMemberName } from 'src/front-components/utils/format-workspace-member-name.util';
@@ -9,6 +9,23 @@ const SLACK_USER_LINKS_PAGE_SIZE = 100;
 
 const SLACK_USER_LINKS_ERROR_MESSAGE =
   'Could not load Slack user links. Please try again later.';
+
+type SlackUserLinkRestRecord = {
+  id?: string | null;
+  name?: string | null;
+  slackUserId?: string | null;
+  slackTeamId?: string | null;
+  source?: string | null;
+  workspaceMemberId?: string | null;
+  workspaceMember?: {
+    id?: string | null;
+    name?: { firstName?: string | null; lastName?: string | null } | null;
+  } | null;
+};
+
+type SlackUserLinksResponse = {
+  data?: { slackUserLinks?: SlackUserLinkRestRecord[] | null } | null;
+};
 
 type SlackUserLinksState = {
   slackUserLinks: SlackUserLinkRecord[];
@@ -31,45 +48,27 @@ export const useSlackUserLinks = (): SlackUserLinksState => {
     setErrorMessage(undefined);
 
     try {
-      const client = new CoreApiClient();
-      const queryResult = await client.query({
-        slackUserLinks: {
-          __args: { first: SLACK_USER_LINKS_PAGE_SIZE },
-          edges: {
-            node: {
-              id: true,
-              name: true,
-              slackUserId: true,
-              slackTeamId: true,
-              source: true,
-              workspaceMemberId: true,
-              workspaceMember: {
-                id: true,
-                name: { firstName: true, lastName: true },
-              },
-            },
-          },
-        },
-      });
+      const response = await new RestApiClient().get<SlackUserLinksResponse>(
+        '/rest/slackUserLinks',
+        { query: { depth: '1', limit: String(SLACK_USER_LINKS_PAGE_SIZE) } },
+      );
 
       const records: SlackUserLinkRecord[] = [];
 
-      for (const edge of queryResult.slackUserLinks?.edges ?? []) {
-        const node = edge?.node;
-
-        if (!isNonEmptyString(node?.id)) {
+      for (const record of response.data?.slackUserLinks ?? []) {
+        if (!isNonEmptyString(record.id)) {
           continue;
         }
 
         records.push({
-          id: node.id,
-          name: node.name ?? null,
-          slackUserId: node.slackUserId ?? null,
-          slackTeamId: node.slackTeamId ?? null,
-          source: node.source ?? null,
-          workspaceMemberId: node.workspaceMemberId ?? null,
-          workspaceMemberName: node.workspaceMember
-            ? formatWorkspaceMemberName(node.workspaceMember.name)
+          id: record.id,
+          name: record.name ?? null,
+          slackUserId: record.slackUserId ?? null,
+          slackTeamId: record.slackTeamId ?? null,
+          source: record.source ?? null,
+          workspaceMemberId: record.workspaceMemberId ?? null,
+          workspaceMemberName: record.workspaceMember
+            ? formatWorkspaceMemberName(record.workspaceMember.name)
             : null,
         });
       }

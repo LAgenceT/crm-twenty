@@ -1,8 +1,8 @@
 import styled from '@emotion/styled';
 import { useState } from 'react';
-import { SearchInput } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
+import { SlackUserLinkTextInput } from 'src/front-components/components/SlackUserLinkTextInput';
 import { useWorkspaceMemberSearch } from 'src/front-components/hooks/use-workspace-member-search';
 import { type WorkspaceMemberOption } from 'src/front-components/types/workspace-member-option.type';
 
@@ -134,9 +134,9 @@ export const WorkspaceMemberPicker = ({
 
   return (
     <StyledContainer>
-      <SearchInput
+      <SlackUserLinkTextInput
         value={searchTerm}
-        onChange={setSearchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
         placeholder="Search a workspace member by name"
         disabled={disabled}
         aria-label="Search a workspace member by name"

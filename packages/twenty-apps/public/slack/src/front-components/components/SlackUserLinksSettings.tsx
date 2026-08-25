@@ -1,7 +1,6 @@
 import 'twenty-ui/style.css';
 
 import styled from '@emotion/styled';
-import { Callout } from 'twenty-ui/feedback';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { H2Title } from 'twenty-ui/typography';
@@ -32,6 +31,30 @@ const StyledCenteredState = styled.div`
   width: 100%;
 `;
 
+const StyledPermissionNotice = styled.div`
+  border: 1px solid ${() => themeCssVariables.border.color.medium};
+  border-left: 3px solid ${() => themeCssVariables.color.yellow};
+  border-radius: ${() => themeCssVariables.border.radius.sm};
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: ${() => themeCssVariables.spacing[1]};
+  padding: ${() => themeCssVariables.spacing[3]};
+`;
+
+const StyledPermissionNoticeTitle = styled.span`
+  color: ${() => themeCssVariables.font.color.primary};
+  font-family: ${() => themeCssVariables.font.family};
+  font-size: ${() => themeCssVariables.font.size.sm};
+  font-weight: ${() => themeCssVariables.font.weight.medium};
+`;
+
+const StyledPermissionNoticeBody = styled.span`
+  color: ${() => themeCssVariables.font.color.secondary};
+  font-family: ${() => themeCssVariables.font.family};
+  font-size: ${() => themeCssVariables.font.size.sm};
+`;
+
 export const SlackUserLinksSettings = () => {
   const { canManage, isPermissionLoading } = useCanManageSlackUserLinks();
   const {
@@ -48,11 +71,15 @@ export const SlackUserLinksSettings = () => {
   return (
     <StyledContainer>
       {!canManage && (
-        <Callout
-          variant="warning"
-          title="You need the workspace members permission"
-          description="Only members with the workspace members permission can create or change Slack user links. You can review the existing links below."
-        />
+        <StyledPermissionNotice>
+          <StyledPermissionNoticeTitle>
+            You need the workspace members permission
+          </StyledPermissionNoticeTitle>
+          <StyledPermissionNoticeBody>
+            Only members with the workspace members permission can create or
+            change Slack user links. You can review the existing links below.
+          </StyledPermissionNoticeBody>
+        </StyledPermissionNotice>
       )}
       {canManage && (
         <SlackUserLinkForm onLinkSaved={refetchSlackUserLinks} />
