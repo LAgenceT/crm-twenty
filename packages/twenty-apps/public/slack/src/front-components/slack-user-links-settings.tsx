@@ -1,7 +1,12 @@
 import { defineSettingsFrontComponent } from 'twenty-sdk/define';
 
 import { SLACK_USER_LINKS_SETTINGS_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
-import { SlackUserLinksSettings } from 'src/front-components/components/SlackUserLinksSettings';
+
+const SlackUserLinksSettings = () => (
+  <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+    Slack user links settings (diagnostic build)
+  </div>
+);
 
 export default defineSettingsFrontComponent({
   universalIdentifier:
