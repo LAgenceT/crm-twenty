@@ -91,10 +91,45 @@ ssh vps 'cd /opt/twenty && docker compose pull && docker compose up -d'   # mise
 `restart: always` sur chaque service et `docker` activé au boot : la stack
 remonte seule après un redémarrage du VPS.
 
+## Sauvegardes
+
+`/opt/twenty/backup.sh`, déclenché par `/etc/cron.d/twenty-backup` à **3h00**
+chaque jour. Journal dans `/var/log/twenty-backup.log` (rotation mensuelle,
+6 mois conservés).
+
+Le script fait un `pg_dump --clean --if-exists --no-owner --no-privileges`
+depuis le conteneur `db`, compressé en gzip, dans `/opt/twenty/backups/`.
+Une archive pèse ~540 Ko.
+
+Trois garde-fous, chacun vérifié par un test :
+
+- **Le dump est validé avant d'être mis en place.** Il est écrit dans un
+  fichier `.in-progress-*`, puis contrôlé (`gzip -t`, présence du marqueur
+  `PostgreSQL database dump complete`, taille minimale) avant d'être renommé.
+  Un `pg_dump` interrompu produit une archive tronquée qui passerait
+  inaperçue sans ce contrôle.
+- **Un échec ne détruit rien.** La rotation n'est atteinte que si le dump a
+  réussi ; le fichier temporaire est nettoyé par un `trap`.
+- **La rétention est par nombre, pas par âge.** `RETENTION_COUNT=7` garde les
+  7 archives les plus récentes. Une purge par ancienneté (`find -mtime +7`)
+  effacerait *toutes* les sauvegardes si la machine restait arrêtée une
+  semaine ; la rétention par nombre en conserve toujours sept.
+
+Restauration :
+
+```bash
+ssh vps 'cd /opt/twenty && gunzip -c backups/twenty-<horodatage>.sql.gz \
+  | docker compose exec -T db psql -U twenty -d twenty'
+```
+
 ## Points ouverts
 
-- **Sauvegardes** : aucune. À mettre en place (`pg_dump` planifié + copie hors
-  du VPS) avant la première donnée client réelle.
+- **Les sauvegardes restent sur le VPS.** Elles protègent d'une erreur
+  applicative ou d'une suppression accidentelle, pas d'une perte du serveur
+  lui-même. Une copie hors du VPS (S3, rsync vers un autre hôte) reste à
+  mettre en place.
+- **Le volume des pièces jointes n'est pas sauvegardé.** Seule la base l'est.
+  `server-local-data` doit être inclus si `STORAGE_TYPE` reste à `local`.
 - **Image `latest`** : non épinglée, à la demande. Un `docker compose pull`
   peut donc changer de version sans préavis. Épingler une version explicite
   est préférable en production.
