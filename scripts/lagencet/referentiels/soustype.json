@@ -1,0 +1,6 @@
+[{"value":"AGENCE_IMMOBILIERE","label":"Agence immobilière","position":0,"color":"blue"},
+ {"value":"NOTAIRE","label":"Notaire","position":1,"color":"purple"},
+ {"value":"SYNDIC","label":"Syndic","position":2,"color":"turquoise"},
+ {"value":"REGIE","label":"Régie","position":3,"color":"green"},
+ {"value":"PARTICULIER","label":"Particulier","position":4,"color":"orange"},
+ {"value":"AUTRE","label":"Autre","position":5,"color":"gray"}]

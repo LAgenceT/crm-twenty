@@ -1,0 +1,9 @@
+[
+ {"nom":"Audit ≤ 110 m²","activite":"AUDIT","eur":890},
+ {"nom":"Audit 111-200 m²","activite":"AUDIT","eur":1090},
+ {"nom":"Audit > 200 m²","activite":"AUDIT","eur":1390},
+ {"nom":"Mission AMO Copro","activite":"AMO_COPRO","eur":null},
+ {"nom":"MAR entrant","activite":"MAR","eur":null},
+ {"nom":"Architecture intérieure","activite":"ARCHITECTURE","eur":null},
+ {"nom":"Rénovation globale chantier","activite":"RENO_GLOBALE","eur":null}
+]

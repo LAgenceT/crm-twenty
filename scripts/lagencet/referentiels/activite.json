@@ -1,0 +1,5 @@
+[{"value":"AUDIT","label":"Audit","position":0,"color":"blue"},
+ {"value":"MAR","label":"MAR","position":1,"color":"green"},
+ {"value":"AMO_COPRO","label":"AMO Copro","position":2,"color":"purple"},
+ {"value":"RENO_GLOBALE","label":"Réno globale","position":3,"color":"orange"},
+ {"value":"ARCHITECTURE","label":"Architecture","position":4,"color":"turquoise"}]

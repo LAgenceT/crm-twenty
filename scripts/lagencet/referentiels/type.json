@@ -1,0 +1,5 @@
+[{"value":"LEAD","label":"Lead","position":0,"color":"yellow"},
+ {"value":"CLIENT","label":"Client","position":1,"color":"green"},
+ {"value":"APPORTEUR","label":"Apporteur","position":2,"color":"blue"},
+ {"value":"SOUS_TRAITANT","label":"Sous-traitant","position":3,"color":"orange"},
+ {"value":"PARTENAIRE","label":"Partenaire","position":4,"color":"purple"}]
