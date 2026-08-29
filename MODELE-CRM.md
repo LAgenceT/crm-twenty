@@ -28,7 +28,7 @@ standard. C'est préférable pour la stabilité des intégrations.
 | `notes` | TEXT | |
 | `contact` | RELATION | → Contacts (le client) |
 | `apporteur` | RELATION | → Contacts (le prescripteur) |
-| `commune` | — | **à créer**, en attente de la liste des 53 communes |
+| `commune` | SELECT | 54 options : 52 communes + « Autre commune 06 » + « Hors département » |
 
 ## Prestation
 
@@ -46,8 +46,8 @@ Champs ajoutés à l'objet standard :
 |---|---|---|
 | `typeContact` | SELECT | Lead, Client, Apporteur, Sous-traitant, Partenaire |
 | `sousType` | SELECT | Agence immobilière, Notaire, Syndic, Régie, Particulier, Autre |
-| `source` | — | **à créer**, en attente des 20 sources d'acquisition |
-| `commune` | — | **à créer**, en attente de la liste des 53 communes |
+| `sourceAcquisition` | SELECT | 20 sources d'acquisition |
+| `commune` | SELECT | même référentiel que `Dossier.commune` |
 
 Le nom technique est `typeContact` et non `type` : `type` est un nom réservé par
 Twenty. Le libellé affiché reste « Type ».
@@ -75,6 +75,32 @@ libellés, eux, peuvent être identiques : « Travaux » apparaît bien deux foi
 **Limite assumée** : rien n'empêche techniquement de poser l'étape « Voté AG »
 sur un dossier dont l'activité est Audit. Les vues filtrées rendent le cas peu
 probable en usage normal, mais la contrainte n'est pas appliquée par le schéma.
+
+## Référentiel communes
+
+54 options : les 52 communes du périmètre d'intervention, plus deux valeurs
+de repli, « Autre commune 06 » et « Hors département ».
+
+Le cadrage initial parlait de 53 communes ; la liste fournie en compte 52.
+À arbitrer si une commune manque.
+
+À noter également : « Gattieres » est saisi sans accent dans le référentiel,
+alors que la commune s'écrit Gattières. Conservé tel quel, à corriger si besoin.
+
+## Catalogue de prestations
+
+| Prestation | Activité | Tarif |
+|---|---|---|
+| Audit ≤ 110 m² | Audit | 890 € |
+| Audit 111-200 m² | Audit | 1 090 € |
+| Audit > 200 m² | Audit | 1 390 € |
+| Mission AMO Copro | AMO Copro | sur devis |
+| MAR entrant | MAR | sur devis |
+| Architecture intérieure | Architecture | sur devis |
+| Rénovation globale chantier | Réno globale | sur devis |
+
+Les prestations « sur devis » ont un `tarif` à `null` (et non à zéro), pour que
+l'absence de tarif se distingue d'une prestation gratuite.
 
 ## Données de démo
 
