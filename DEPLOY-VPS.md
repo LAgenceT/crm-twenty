@@ -36,7 +36,7 @@ et n'ont jamais transité hors du serveur.
 
 ## Reverse proxy
 
-`/etc/nginx/sites-available/twenty`, `server_name crm.lagence-t.fr`.
+`/etc/nginx/sites-available/twenty`, `server_name app.lagence-t.fr`.
 Proxy vers `127.0.0.1:3000`, en-têtes `X-Forwarded-*`, support WebSocket,
 `client_max_body_size 100M`, `proxy_read_timeout 300s`.
 Le vhost `default` est désactivé.
@@ -58,23 +58,26 @@ Pare-feu UFW : 22, 80, 443.
 Total ~2,6 Go sur 11 Go. À comparer au plafond de 1 Go par conteneur du plan
 Railway, qui empêchait le serveur de démarrer.
 
-## SSL — reste à faire
+## SSL
 
-Le certificat n'est **pas** émis : ni `crm.lagence-t.fr` ni
-`twenty.lagence-t.fr` n'ont d'enregistrement A. Let's Encrypt valide en
-HTTP-01, le domaine doit donc résoudre vers le VPS au préalable.
+**https://app.lagence-t.fr**
 
-Une fois l'enregistrement `A crm.lagence-t.fr → 169.58.213.156` propagé :
+| Élément | Valeur |
+|---|---|
+| Certificat | `CN=app.lagence-t.fr`, Let's Encrypt |
+| Validité | jusqu'au 27/11/2026 |
+| Redirection | HTTP → HTTPS en 301 |
+| Renouvellement | `certbot.timer`, actif et activé au boot |
 
-```bash
-ssh vps 'certbot --nginx -d crm.lagence-t.fr --agree-tos -m contact@lagence-t.fr --redirect --non-interactive'
-```
+`SERVER_URL=https://app.lagence-t.fr` dans `/opt/twenty/.env`.
 
-Certbot ajoute le bloc TLS, la redirection 80 → 443, et le renouvellement
-automatique (`certbot.timer` déjà actif et activé au boot).
+Note d'ordre : `certbot --nginx` cherche le bloc `server` dont le `server_name`
+correspond au domaine demandé. Le vhost doit donc porter le bon `server_name`
+**avant** de lancer certbot.
 
-Si un autre sous-domaine est retenu, modifier `server_name` dans le vhost et
-`SERVER_URL` dans `/opt/twenty/.env`, puis `docker compose up -d server worker`.
+Pour changer de sous-domaine : modifier `server_name` dans le vhost et
+`SERVER_URL` dans `.env`, puis `docker compose up -d server worker` et
+relancer certbot.
 
 ## Exploitation
 
@@ -98,6 +101,14 @@ remonte seule après un redémarrage du VPS.
 - **Stockage fichiers** : `STORAGE_TYPE=local` sur volume Docker. Sauvegardé
   uniquement si le volume `server-local-data` est inclus dans les backups.
 - **Email** : aucun SMTP configuré, les invitations utilisateur ne partiront pas.
-- **Métier** : cette instance est vierge. La configuration de l'étape 2
-  (objets Dossier/Prestation, pipelines, référentiels) a été appliquée sur
-  l'instance Railway et devra être rejouée ici — voir [MODELE-CRM.md](MODELE-CRM.md).
+
+## Configuration métier
+
+Le modèle décrit dans [MODELE-CRM.md](MODELE-CRM.md) est intégralement appliqué
+sur cette instance : objets `Dossier` et `Prestation`, renommage de Companies en
+Contacts, les 5 vues Kanban filtrées par activité, les référentiels commune
+(54 options) et source d'acquisition (20 options), et le catalogue de
+7 prestations. Les données de démo Twenty ont été supprimées.
+
+Le token API de l'instance Railway ne fonctionne pas ici : le JWT est signé avec
+un secret propre à chaque instance. Chaque instance a sa propre clé API.
