@@ -1,7 +1,8 @@
 # Modèle de données CRM — L'Agence T & NRJ Home
 
 Configuration appliquée sur l'instance Twenty via l'API metadata.
-Instance : https://twenty-server-production-0c40.up.railway.app
+Instance : https://app.lagence-t.fr (le déploiement Railway est abandonné,
+voir DEPLOY-VPS.md)
 
 ## Objets
 
@@ -48,6 +49,15 @@ Champs ajoutés à l'objet standard :
 | `sousType` | SELECT | Agence immobilière, Notaire, Syndic, Régie, Particulier, Autre |
 | `sourceAcquisition` | SELECT | 20 sources d'acquisition |
 | `commune` | SELECT | même référentiel que `Dossier.commune` |
+| `etapePartenariat` | SELECT | Identifié, Contacté, Rencontré, Convention signée, Actif, Dormant |
+
+`sourceAcquisition` est porté par le contact seul : un dossier hérite de la
+source par sa relation `contact`. Pas de duplication sur `Dossier`, pour
+qu'aucune incohérence ne soit possible entre les deux.
+
+`etapePartenariat` porte le pipeline de la relation avec un apporteur. Twenty
+n'a pas de `stage` sur `company` — `stage` appartient à `opportunity`, objet
+désactivé ici.
 
 Le nom technique est `typeContact` et non `type` : `type` est un nom réservé par
 Twenty. Le libellé affiché reste « Type ».
@@ -61,11 +71,48 @@ filtrée sur `activite` et groupée par `etape`.
 
 | Vue Kanban | Filtre | Étapes |
 |---|---|---|
-| Audit énergétique | `activite IS AUDIT` | Commande reçue → Visite planifiée → En production → Livré → Facturé |
-| MAR | `activite IS MAR` | Contrat signé → Visite audit → Projet travaux → Dossier aides → Travaux → Rapport |
-| AMO Copro | `activite IS AMO_COPRO` | Pré-analyse → Proposition → Voté AG → Dossier Anah → Travaux → Solde versé |
-| Réno globale | `activite IS RENO_GLOBALE` | Estimation → Devis signé → Chantier planifié → En cours → Réception → Soldé |
-| Architecture | `activite IS ARCHITECTURE` | Brief → Avant-projet → Plans livrés → Suivi travaux → Soldé |
+| Kanban Audit | `activite IS AUDIT` | Commande reçue → Visite planifiée → En production → Livré → Facturé |
+| Kanban MAR | `activite IS MAR` | Contrat signé → Visite audit → Projet travaux → Dossier aides → Travaux → Rapport |
+| Kanban AMO Copro | `activite IS AMO_COPRO` | Pré-analyse → Proposition → Voté AG → Dossier Anah → Travaux → Solde versé |
+| Kanban Réno globale | `activite IS RENO_GLOBALE` | Estimation → Devis signé → Chantier planifié → En cours → Réception → Soldé |
+| Kanban Architecture | `activite IS ARCHITECTURE` | Brief → Avant-projet → Plans livrés → Suivi travaux → Soldé |
+
+Chaque Kanban de pipeline n'affiche que les étapes du sien : les colonnes des
+autres sont masquées, pas absentes. Voir CUSTOMISATION.md, « Colonnes des vues
+Kanban ».
+
+## Les 16 vues
+
+Réconciliées par `scripts/lagencet/create-views.js`. Toute vue Kanban se
+termine par une colonne « sans valeur », qui rattrape les enregistrements dont
+le champ de groupement n'est pas renseigné — d'où `options + 1` colonnes.
+
+| # | Vue | Objet | Type | Groupée par | Filtre | Colonnes |
+|---|---|---|---|---|---|---|
+| 1 | Tous les dossiers | Dossier | TABLE | — | — | — |
+| 2 | Kanban Audit | Dossier | KANBAN | `etape` | `activite IS AUDIT` | 6 |
+| 3 | Kanban MAR | Dossier | KANBAN | `etape` | `activite IS MAR` | 7 |
+| 4 | Kanban AMO Copro | Dossier | KANBAN | `etape` | `activite IS AMO_COPRO` | 7 |
+| 5 | Kanban Réno globale | Dossier | KANBAN | `etape` | `activite IS RENO_GLOBALE` | 7 |
+| 6 | Kanban Architecture | Dossier | KANBAN | `etape` | `activite IS ARCHITECTURE` | 6 |
+| 7 | Par activité | Dossier | KANBAN | `activite` | — | 6 |
+| 8 | Par DPE | Dossier | KANBAN | `dpe` | — | 5 |
+| 9 | Par commune | Dossier | KANBAN | `commune` | — | 55 |
+| 10 | Tous les contacts | Contacts | TABLE | — | — | — |
+| 11 | Partenariats | Contacts | KANBAN | `etapePartenariat` | `typeContact IS APPORTEUR` | 7 |
+| 12 | Par type | Contacts | KANBAN | `typeContact` | — | 6 |
+| 13 | Par sous-type | Contacts | KANBAN | `sousType` | — | 7 |
+| 14 | Par source | Contacts | KANBAN | `sourceAcquisition` | — | 21 |
+| 15 | Toutes les prestations | Prestation | TABLE | — | — | — |
+| 16 | Par activité | Prestation | KANBAN | `activite` | — | 6 |
+
+**Couleurs des colonnes** : un `viewGroup` n'a pas de champ couleur. Une colonne
+Kanban prend la couleur de l'option SELECT qu'elle représente
+(`field.options[].color`). Les 9 champs de groupement ont toutes leurs options
+colorées — il n'y a rien à régler au niveau des vues.
+
+**Vue « Par commune »** : 55 colonnes. Utilisable, mais long à faire défiler.
+Un filtre par secteur serait plus confortable si l'usage le confirme.
 
 Les `value` des options sont préfixées par pipeline (`MAR_TRAVAUX`,
 `AMO_TRAVAUX`) car Twenty impose des `value` uniques dans un SELECT. Les

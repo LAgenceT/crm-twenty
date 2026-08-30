@@ -25,6 +25,14 @@ secret propre à l'instance.
 | `rename-field-labels.sh` | Traduction en français des libellés de champs |
 | `referentiels/build-etapes.js` | Génère les 28 options d'étapes des 5 pipelines |
 | `referentiels/build-options.js` | Convertit une liste de libellés en options SELECT (`value` uniques, positions, couleurs) |
+| `fix-kanban-columns.js` | Restreint chaque Kanban Dossier aux étapes de son pipeline |
+| `order-sidebar.js` | Ordonne la navigation latérale (Dossiers et Prestations en tête) |
+| `create-view-partenariats.js` | Crée la vue Kanban « Partenariats » sur Contacts (absorbé par `create-views.js`) |
+| `create-views.js` | Réconcilie les 16 vues métier, via l'API REST metadata |
+| `repair-view-groups.js` | Répare les colonnes de Kanban : doublons, colonnes masquées à tort |
+
+Les trois derniers sont **idempotents dans leurs effets** : ils écrivent un état
+absolu et acceptent `--dry-run`. Les rejouer ne crée pas de doublon.
 
 ## Référentiels
 
@@ -38,6 +46,7 @@ secret propre à l'instance.
 | `communes.json` | 54 options (52 communes + 2 valeurs de repli) |
 | `sources.json` | 20 sources d'acquisition |
 | `prestations.json` | 7 prestations du catalogue |
+| `etape-partenariat.json` | 6 étapes de la relation apporteur |
 
 `communes.list.json` et `sources.list.json` sont les listes brutes ; les
 fichiers d'options correspondants sont régénérés par :
@@ -56,3 +65,16 @@ node referentiels/build-etapes.js > referentiels/etapes.json
   libellés. `company` reste `company`.
 - Twenty crée un champ `name` comme identifiant d'affichage sur chaque objet.
   Basculer l'identifiant sur le bon champ puis supprimer `name` évite le doublon.
+- `createView` avec un `mainGroupByFieldMetadataId` crée déjà un viewGroup par
+  option : ne pas enchaîner sur `createManyViewGroups`, le board afficherait
+  chaque colonne deux fois.
+- `updateWorkspace` refuse les clés API (`@AuthUserWorkspaceId()` exige une
+  session utilisateur). Nom du workspace et logo restent à faire dans
+  l'interface, *Paramètres → Général*.
+- `GET /rest/metadata/viewGroups?filter=viewId[eq]:<id>` accepte `filter` et
+  l'**ignore**, en HTTP 200 : la réponse mélange les colonnes de toutes les
+  vues. Lire les colonnes sur la vue — `GET /rest/metadata/views/<id>` — qui
+  les embarque correctement rattachées.
+- `create-views.js` reconnaît une vue à sa **configuration** (objet, type,
+  champ de groupement, filtre), pas à son nom : rejouable sans créer de
+  doublon, et il renomme au passage une vue déjà conforme.
