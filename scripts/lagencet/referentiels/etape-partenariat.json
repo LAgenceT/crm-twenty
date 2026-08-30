@@ -1,0 +1,8 @@
+[
+  { "value": "IDENTIFIE",         "label": "Identifié",         "position": 0, "color": "gray" },
+  { "value": "CONTACTE",          "label": "Contacté",          "position": 1, "color": "blue" },
+  { "value": "RENCONTRE",         "label": "Rencontré",         "position": 2, "color": "turquoise" },
+  { "value": "CONVENTION_SIGNEE", "label": "Convention signée", "position": 3, "color": "purple" },
+  { "value": "ACTIF",             "label": "Actif",             "position": 4, "color": "green" },
+  { "value": "DORMANT",           "label": "Dormant",           "position": 5, "color": "orange" }
+]
